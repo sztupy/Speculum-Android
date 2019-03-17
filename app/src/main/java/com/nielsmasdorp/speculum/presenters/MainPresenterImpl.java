@@ -10,9 +10,7 @@ import com.nielsmasdorp.speculum.R;
 import com.nielsmasdorp.speculum.activity.MainActivity;
 import com.nielsmasdorp.speculum.interactor.MainInteractor;
 import com.nielsmasdorp.speculum.models.Configuration;
-import com.nielsmasdorp.speculum.models.RedditPost;
 import com.nielsmasdorp.speculum.models.Weather;
-import com.nielsmasdorp.speculum.models.YoMommaJoke;
 import com.nielsmasdorp.speculum.util.Constants;
 import com.nielsmasdorp.speculum.views.MainView;
 
@@ -67,12 +65,6 @@ public class MainPresenterImpl implements MainPresenter, RecognitionListener, Te
                 initSpeechRecognitionService();
                 setupTts();
             }
-            if (!configuration.isSimpleLayout()) {
-                startReddit();
-                if (hasAccessToCalendar) {
-                    startCalendar();
-                }
-            }
         }
     }
 
@@ -80,10 +72,6 @@ public class MainPresenterImpl implements MainPresenter, RecognitionListener, Te
         interactor.unSubscribe();
         if (null != configuration) {
             startWeather();
-            if (!configuration.isSimpleLayout()) {
-                startReddit();
-                startCalendar();
-            }
         }
     }
 
@@ -103,7 +91,6 @@ public class MainPresenterImpl implements MainPresenter, RecognitionListener, Te
             textToSpeech.shutdown();
         }
         view.hideListening();
-        view.hideMap();
         interactor.unSubscribe();
     }
 
@@ -117,10 +104,6 @@ public class MainPresenterImpl implements MainPresenter, RecognitionListener, Te
     private void startWeather() {
         interactor.loadWeather(configuration.getLocation(), configuration.isCelsius(), configuration.getPollingDelay(), ((MainActivity)
                 view).getString(R.string.forecast_api_key), new WeatherSubscriber());
-    }
-
-    private void startReddit() {
-        interactor.loadTopRedditPost(configuration.getSubreddit(), configuration.getPollingDelay(), new RedditSubscriber());
     }
 
     private void startCalendar() {
@@ -238,44 +221,7 @@ public class MainPresenterImpl implements MainPresenter, RecognitionListener, Te
                 setListeningMode(Constants.COMMANDS_SEARCH);
                 updateData();
                 break;
-            case Constants.JOKE_PHRASE:
-                interactor.loadYoMommaJoke(new YoMammaJokeSubscriber());
-                setListeningMode(Constants.COMMANDS_SEARCH);
-                break;
-            case Constants.MAP_PHRASE:
-                speak(Constants.MAP_NOTIFICATION);
-                setListeningMode(Constants.COMMANDS_SEARCH);
-                showMap();
-                break;
         }
-    }
-
-    private void showMap() {
-
-        timeOut(10)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<Void>() {
-
-                    @Override
-                    public void onStart() {
-                        view.showMap(configuration.getLocation());
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        view.hideMap();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        view.showError(e.getLocalizedMessage());
-                    }
-
-                    @Override
-                    public void onNext(Void aVoid) {
-                    }
-                });
     }
 
     private Observable<Void> timeOut(Integer seconds) {
@@ -370,24 +316,7 @@ public class MainPresenterImpl implements MainPresenter, RecognitionListener, Te
 
         @Override
         public void onNext(Weather weather) {
-            view.displayCurrentWeather(weather, configuration.isSimpleLayout());
-        }
-    }
-
-    private final class RedditSubscriber extends Subscriber<RedditPost> {
-
-        @Override
-        public void onCompleted() {
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            view.showError(e.getMessage());
-        }
-
-        @Override
-        public void onNext(RedditPost redditPost) {
-            view.displayTopRedditPost(redditPost);
+            view.displayCurrentWeather(weather);
         }
     }
 
@@ -405,23 +334,6 @@ public class MainPresenterImpl implements MainPresenter, RecognitionListener, Te
         @Override
         public void onNext(String events) {
             view.displayCalendarEvents(events);
-        }
-    }
-
-    private final class YoMammaJokeSubscriber extends Subscriber<YoMommaJoke> {
-
-        @Override
-        public void onCompleted() {
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            view.showError(e.getMessage());
-        }
-
-        @Override
-        public void onNext(YoMommaJoke joke) {
-            speak(joke.getJoke());
         }
     }
 

@@ -17,18 +17,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.assent.Assent;
-import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.nielsmasdorp.speculum.R;
 import com.nielsmasdorp.speculum.SpeculumApplication;
 import com.nielsmasdorp.speculum.models.Configuration;
-import com.nielsmasdorp.speculum.models.RedditPost;
 import com.nielsmasdorp.speculum.models.Weather;
 import com.nielsmasdorp.speculum.presenters.MainPresenter;
 import com.nielsmasdorp.speculum.util.ASFObjectStore;
 import com.nielsmasdorp.speculum.util.Constants;
 import com.nielsmasdorp.speculum.views.MainView;
-import com.squareup.picasso.Picasso;
 
 import javax.inject.Inject;
 
@@ -48,7 +45,6 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
     @BindView(R.id.tv_last_updated) TextView tvWeatherLastUpdated;
     @BindView(R.id.iv_listening) ImageView ivListening;
 
-    @Nullable @BindView(R.id.tv_summary) TextView tvWeatherSummary;
     @Nullable @BindView(R.id.weather_stats_layout) LinearLayout llWeatherStatsLayout;
     @Nullable @BindView(R.id.calendar_layout) LinearLayout llCalendarLayout;
     @Nullable @BindView(R.id.reddit_layout) LinearLayout llRedditLayout;
@@ -72,15 +68,11 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
     @Nullable @BindView(R.id.tv_reddit_post_title) TextView tvRedditPostTitle;
     @Nullable @BindView(R.id.tv_reddit_post_votes) TextView tvRedditPostVotes;
 
-    @BindString(R.string.old_config_found_snackbar) String oldConfigFound;
-    @BindString(R.string.old_config_found_snackbar_back) String getOldConfigFoundBack;
     @BindString(R.string.give_command) String giveCommand;
     @BindString(R.string.listening) String listening;
     @BindString(R.string.command_understood) String commandUnderstood;
     @BindString(R.string.executing) String executing;
     @BindString(R.string.last_updated) String lastUpdated;
-    @BindString(R.string.static_maps_api_key) String mapsApiKey;
-
     // @formatter:on
 
     @Inject
@@ -89,10 +81,6 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
     @Inject
     ASFObjectStore<Configuration> objectStore;
 
-    MaterialDialog mapDialog;
-
-    ObjectAnimator pulse;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,12 +88,14 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
         ((SpeculumApplication) getApplication()).createMainComponent(this).inject(this);
         Assent.setActivity(this, this);
 
-        Configuration configuration = objectStore.get();
-        boolean didLoadOldConfig = getIntent().getBooleanExtra(Constants.SAVED_CONFIGURATION_IDENTIFIER, false);
+        Configuration configuration = new Configuration.Builder().
+                celsius(true).
+                location(getString(R.string.maps_location)).
+                pollingDelay(3600).
+                voiceCommands(false).
+                build();
 
-        ViewStub viewStub = configuration.isSimpleLayout() ?
-                (ViewStub) findViewById(R.id.stub_simple) :
-                (ViewStub) findViewById(R.id.stub_verbose);
+        ViewStub viewStub = (ViewStub) findViewById(R.id.stub_verbose);
         if (null != viewStub) viewStub.inflate();
 
         ButterKnife.bind(this);
@@ -113,17 +103,7 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
         //never sleep
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        if (didLoadOldConfig)
-            showConfigurationSnackbar();
-
         presenter.setConfiguration(configuration);
-    }
-
-    private void showConfigurationSnackbar() {
-        Snackbar
-                .make(llWeatherLayout, oldConfigFound, Snackbar.LENGTH_LONG)
-                .setAction(getOldConfigFoundBack, view -> onBackPressed())
-                .show();
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -153,77 +133,37 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
     }
 
     @Override
-    public void showMap(String location) {
-
-        String url = Constants.STATIC_MAPS_URL_FIRST +
-                location + Constants.STATIC_MAPS_URL_SECOND +
-                location + Constants.STATIC_MAPS_URL_THIRD +
-                mapsApiKey;
-
-        mapDialog = new MaterialDialog.Builder(this)
-                .customView(R.layout.map_image, false)
-                .contentGravity(GravityEnum.CENTER)
-                .build();
-
-        View imageView = mapDialog.getCustomView();
-        Picasso.with(MainActivity.this).load(url).into((ImageView) imageView);
-        mapDialog.show();
-    }
-
-    @Override
-    public void hideMap() {
-        if (null != mapDialog && mapDialog.isShowing()) {
-            mapDialog.dismiss();
-            mapDialog = null;
-        }
-        hideSystemUI();
-    }
-
-    @Override
     @SuppressWarnings("all")
-    public void displayCurrentWeather(Weather weather, boolean isSimpleLayout) {
+    public void displayCurrentWeather(Weather weather) {
 
         // Current simple weather
         this.ivWeatherCondition.setImageResource(weather.getIconId());
         this.tvWeatherTemperature.setText(weather.getTemperature());
         this.tvWeatherLastUpdated.setText(lastUpdated + " " + weather.getLastUpdated());
 
-        if (!isSimpleLayout) {
-            // More weather info
-            this.tvWeatherWind.setText(weather.getWindInfo());
-            this.tvWeatherHumidity.setText(weather.getHumidityInfo());
-            this.tvWeatherPressure.setText(weather.getPressureInfo());
-            this.tvWeatherVisibility.setText(weather.getVisibilityInfo());
-            // Forecast
-            this.tvDayOneDate.setText(weather.getForecast().get(0).getDate());
-            this.tvDayOneTemperature.setText(weather.getForecast().get(0).getTemperature());
-            this.ivDayOneIcon.setImageResource(weather.getForecast().get(0).getIconId());
-            this.tvDayTwoDate.setText(weather.getForecast().get(1).getDate());
-            this.tvDayTwoTemperature.setText(weather.getForecast().get(1).getTemperature());
-            this.ivDayTwoIcon.setImageResource(weather.getForecast().get(1).getIconId());
-            this.tvDayThreeDate.setText(weather.getForecast().get(2).getDate());
-            this.tvDayThreeTemperature.setText(weather.getForecast().get(2).getTemperature());
-            this.ivDayThreeIcon.setImageResource(weather.getForecast().get(2).getIconId());
-            this.tvDayFourDate.setText(weather.getForecast().get(3).getDate());
-            this.tvDayFourTemperature.setText(weather.getForecast().get(3).getTemperature());
-            this.ivDayFourIcon.setImageResource(weather.getForecast().get(2).getIconId());
-        } else {
-            this.tvWeatherSummary.setText(weather.getSummary());
-        }
+        // More weather info
+        this.tvWeatherWind.setText(weather.getWindInfo());
+        this.tvWeatherHumidity.setText(weather.getHumidityInfo());
+        this.tvWeatherPressure.setText(weather.getPressureInfo());
+        this.tvWeatherVisibility.setText(weather.getVisibilityInfo());
+        // Forecast
+        this.tvDayOneDate.setText(weather.getForecast().get(0).getDate());
+        this.tvDayOneTemperature.setText(weather.getForecast().get(0).getTemperature());
+        this.ivDayOneIcon.setImageResource(weather.getForecast().get(0).getIconId());
+        this.tvDayTwoDate.setText(weather.getForecast().get(1).getDate());
+        this.tvDayTwoTemperature.setText(weather.getForecast().get(1).getTemperature());
+        this.ivDayTwoIcon.setImageResource(weather.getForecast().get(1).getIconId());
+        this.tvDayThreeDate.setText(weather.getForecast().get(2).getDate());
+        this.tvDayThreeTemperature.setText(weather.getForecast().get(2).getTemperature());
+        this.ivDayThreeIcon.setImageResource(weather.getForecast().get(2).getIconId());
+        this.tvDayFourDate.setText(weather.getForecast().get(3).getDate());
+        this.tvDayFourTemperature.setText(weather.getForecast().get(3).getTemperature());
+        this.ivDayFourIcon.setImageResource(weather.getForecast().get(2).getIconId());
 
         if (this.llWeatherLayout.getVisibility() != View.VISIBLE) {
             this.llWeatherLayout.setVisibility(View.VISIBLE);
             this.llWeatherStatsLayout.setVisibility(View.VISIBLE);
         }
-    }
-
-    @Override
-    @SuppressWarnings("all")
-    public void displayTopRedditPost(RedditPost redditPost) {
-        tvRedditPostTitle.setText(redditPost.getTitle());
-        tvRedditPostVotes.setText(redditPost.getUps() + "");
-        if (this.llRedditLayout.getVisibility() != View.VISIBLE)
-            this.llRedditLayout.setVisibility(View.VISIBLE);
     }
 
     @Override

@@ -9,14 +9,5 @@
         android:layout_gravity="bottom"
         android:inflatedId="@+id/stub"
         android:layout="@layout/verbose_layout" />
-
-    <ViewStub xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/stub_simple"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="bottom"
-        android:inflatedId="@+id/stub"
-        android:layout="@layout/simple_layout" />
-
 </FrameLayout>
 

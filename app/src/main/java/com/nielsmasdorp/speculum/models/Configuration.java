@@ -7,21 +7,15 @@ public class Configuration {
 
     private boolean celsius;
     private String location;
-    private String subreddit;
     private int pollingDelay;
-    private boolean rememberConfig;
     private boolean voiceCommands;
-    private boolean simpleLayout;
 
     public static class Builder {
 
         private boolean celsius;
         private String location;
-        private String subreddit;
         private int pollingDelay;
-        private boolean rememberConfig;
         private boolean voiceCommands;
-        private boolean simpleLayout;
 
         public Builder celsius(boolean celsius) {
             this.celsius = celsius;
@@ -33,28 +27,13 @@ public class Configuration {
             return this;
         }
 
-        public Builder subreddit(String subreddit) {
-            this.subreddit = subreddit;
-            return this;
-        }
-
         public Builder pollingDelay(int pollingDelay) {
             this.pollingDelay = pollingDelay;
             return this;
         }
 
-        public Builder rememberConfig(boolean rememberConfig) {
-            this.rememberConfig = rememberConfig;
-            return this;
-        }
-
         public Builder voiceCommands(boolean voiceCommands) {
             this.voiceCommands = voiceCommands;
-            return this;
-        }
-
-        public Builder simpleLayout(boolean simpleLayout) {
-            this.simpleLayout = simpleLayout;
             return this;
         }
 
@@ -68,11 +47,8 @@ public class Configuration {
 
         this.celsius = builder.celsius;
         this.location = builder.location;
-        this.subreddit = builder.subreddit;
         this.pollingDelay = builder.pollingDelay;
-        this.rememberConfig = builder.rememberConfig;
         this.voiceCommands = builder.voiceCommands;
-        this.simpleLayout = builder.simpleLayout;
     }
 
     public boolean isCelsius() {
@@ -91,14 +67,6 @@ public class Configuration {
         this.location = location;
     }
 
-    public String getSubreddit() {
-        return subreddit;
-    }
-
-    public void setSubreddit(String subreddit) {
-        this.subreddit = subreddit;
-    }
-
     public int getPollingDelay() {
         return pollingDelay;
     }
@@ -113,21 +81,5 @@ public class Configuration {
 
     public void setVoiceCommands(boolean voiceCommands) {
         this.voiceCommands = voiceCommands;
-    }
-
-    public boolean isSimpleLayout() {
-        return simpleLayout;
-    }
-
-    public void setSimpleLayout(boolean simpleLayout) {
-        this.simpleLayout = simpleLayout;
-    }
-
-    public boolean isRememberConfig() {
-        return rememberConfig;
-    }
-
-    public void setRememberConfig(boolean rememberConfig) {
-        this.rememberConfig = rememberConfig;
     }
 }
