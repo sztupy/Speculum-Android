@@ -64,4 +64,20 @@ public class Currently {
     public Double getPressure() {
         return pressure;
     }
+
+    @Override
+    public String toString() {
+        return "Currently{" +
+                "time=" + time +
+                ", summary='" + summary + '\'' +
+                ", icon='" + icon + '\'' +
+                ", temperature=" + temperature +
+                ", apparentTemperature=" + apparentTemperature +
+                ", humidity=" + humidity +
+                ", windSpeed=" + windSpeed +
+                ", windBearing=" + windBearing +
+                ", visibility=" + visibility +
+                ", pressure=" + pressure +
+                '}';
+    }
 }

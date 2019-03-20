@@ -8,14 +8,12 @@ public class Configuration {
     private boolean celsius;
     private String location;
     private int pollingDelay;
-    private boolean voiceCommands;
 
     public static class Builder {
 
         private boolean celsius;
         private String location;
         private int pollingDelay;
-        private boolean voiceCommands;
 
         public Builder celsius(boolean celsius) {
             this.celsius = celsius;
@@ -32,11 +30,6 @@ public class Configuration {
             return this;
         }
 
-        public Builder voiceCommands(boolean voiceCommands) {
-            this.voiceCommands = voiceCommands;
-            return this;
-        }
-
         public Configuration build() {
 
             return new Configuration(this);
@@ -48,7 +41,6 @@ public class Configuration {
         this.celsius = builder.celsius;
         this.location = builder.location;
         this.pollingDelay = builder.pollingDelay;
-        this.voiceCommands = builder.voiceCommands;
     }
 
     public boolean isCelsius() {
@@ -73,13 +65,5 @@ public class Configuration {
 
     public void setPollingDelay(int pollingDelay) {
         this.pollingDelay = pollingDelay;
-    }
-
-    public boolean isVoiceCommands() {
-        return voiceCommands;
-    }
-
-    public void setVoiceCommands(boolean voiceCommands) {
-        this.voiceCommands = voiceCommands;
     }
 }

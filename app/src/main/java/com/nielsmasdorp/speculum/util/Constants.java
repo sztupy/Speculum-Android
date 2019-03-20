@@ -46,21 +46,6 @@ public class Constants {
     public static final String TEMPERATURE_IMPERIAL = "F";
     public static final String TEMPERATURE_METRIC = "C";
 
-    /**
-     * Speech commands
-     */
-    public static final String KWS_SEARCH = "wakeup";
-    public static final String COMMANDS_SEARCH = "commands";
-    public static final String KEYPHRASE = "hello magic mirror";
-    public static final String UPDATE_PHRASE = "update";
-    public static final String SLEEP_PHRASE = "go to sleep";
-
-    /**
-     * TTS phrases
-     */
-    public static final String UPDATE_NOTIFICATION = "Okay, here is new data.";
-    public static final String SLEEP_NOTIFICATION = "I am going back to sleep, bye bye.";
-    public static final String WAKE_NOTIFICATION = "Hello there. What can I do for you?";
 
     /**
      * Shared preferences identifiers
@@ -68,5 +53,4 @@ public class Constants {
     public static final String SP_LOCATION_IDENTIFIER = "location";
     public static final String SP_POLLING_IDENTIFIER = "pollingDelay";
     public static final String SP_CELSIUS_IDENTIFIER = "celsius";
-    public static final String SP_VOICE_IDENTIFIER = "voiceCommands";
 }

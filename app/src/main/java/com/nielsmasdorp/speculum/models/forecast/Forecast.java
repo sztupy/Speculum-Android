@@ -27,4 +27,12 @@ public class Forecast {
     public void setData(List<DayForecast> data) {
         this.data = data;
     }
+
+    @Override
+    public String toString() {
+        return "Forecast{" +
+                "icon='" + icon + '\'' +
+                ", data=" + data +
+                '}';
+    }
 }

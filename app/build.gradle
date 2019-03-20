@@ -44,6 +44,11 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    def solidVersion = '2.0.3'
+    compile "info.android15.solid:streams:$solidVersion"
+    compile "info.android15.solid:collections:$solidVersion"
+
     compile 'com.android.support:appcompat-v7:25.0.1'
     compile 'com.android.support:design:25.0.1'
 

@@ -13,5 +13,7 @@ public interface MainPresenter {
 
     void start(boolean hasAccessToCalendar);
 
-    void showError(String error);
+    void foreground();
+
+    void background();
 }

@@ -1,6 +1,7 @@
 package com.nielsmasdorp.speculum.interactor;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.nielsmasdorp.speculum.models.Weather;
 import com.nielsmasdorp.speculum.util.Observables;
@@ -25,6 +26,7 @@ import rx.subscriptions.CompositeSubscription;
  */
 public class MainInteractorImpl implements MainInteractor {
 
+    private static final String LOG_TAG = "MainInteractor";
     private static int AMOUNT_OF_RETRIES = 3;
     private static int DELAY_IN_SECONDS = 4;
 
@@ -32,7 +34,8 @@ public class MainInteractorImpl implements MainInteractor {
     private ForecastIOService forecastIOService;
     private GoogleCalendarService googleCalendarService;
     private WeatherIconGenerator weatherIconGenerator;
-    private CompositeSubscription compositeSubscription;
+    private CompositeSubscription longRunningCompositeSubscription;
+    private CompositeSubscription temporaryCompositeSubscription;
 
     public MainInteractorImpl(Application application, ForecastIOService forecastIOService,
                               GoogleCalendarService googleCalendarService,
@@ -42,13 +45,14 @@ public class MainInteractorImpl implements MainInteractor {
         this.forecastIOService = forecastIOService;
         this.googleCalendarService = googleCalendarService;
         this.weatherIconGenerator = weatherIconGenerator;
-        this.compositeSubscription = new CompositeSubscription();
+        this.longRunningCompositeSubscription = new CompositeSubscription();
+        this.temporaryCompositeSubscription = new CompositeSubscription();
     }
 
     @Override
     public void loadCalendarEvents(int updateDelay, Subscriber<String> subscriber) {
 
-        compositeSubscription.add(Observable.interval(0, updateDelay, TimeUnit.MINUTES)
+        longRunningCompositeSubscription.add(Observable.interval(0, updateDelay, TimeUnit.MINUTES)
                 .flatMap(ignore -> googleCalendarService.getCalendarEvents())
                 .retryWhen(Observables.exponentialBackoff(AMOUNT_OF_RETRIES, DELAY_IN_SECONDS, TimeUnit.SECONDS))
                 .observeOn(AndroidSchedulers.mainThread())
@@ -62,37 +66,35 @@ public class MainInteractorImpl implements MainInteractor {
 
         final String query = celsius ? Constants.WEATHER_QUERY_SECOND_CELSIUS : Constants.WEATHER_QUERY_SECOND_FAHRENHEIT;
 
-        compositeSubscription.add(Observable.interval(0, updateDelay, TimeUnit.MINUTES)
-                .flatMap(ignore -> forecastIOService.getApi().getCurrentWeatherConditions(apiKey, location, query))
+        longRunningCompositeSubscription.add(Observable.interval(0, updateDelay, TimeUnit.MINUTES, Schedulers.io())
+                .doOnNext(s -> Log.i(LOG_TAG, "Interval fired: " + s + " on thread " + Thread.currentThread().getName()))
+                .flatMap(ignore -> forecastIOService.getApi().getCurrentWeatherConditions(apiKey, location, query, "hourly"))
                 .flatMap(response -> forecastIOService.getCurrentWeather(response, weatherIconGenerator, application, celsius))
                 .retryWhen(Observables.exponentialBackoff(AMOUNT_OF_RETRIES, DELAY_IN_SECONDS, TimeUnit.SECONDS))
                 .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(s -> Log.i(LOG_TAG, "Observe fired: " + s + " on thread " + Thread.currentThread().getName()))
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
                 .subscribe(subscriber));
     }
 
     @Override
-    public void getAssetsDirForSpeechRecognizer(Subscriber<File> subscriber) {
-
-        Observable.defer(() -> {
-            try {
-                Assets assets = new Assets(application);
-                File assetDir = assets.syncAssets();
-                return Observable.just(assetDir);
-            } catch (IOException e) {
-                throw new RuntimeException("IOException: " + e.getLocalizedMessage());
-            }
-        })
-                .subscribeOn(Schedulers.io())
-                .unsubscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
+    public void loadSecondScheduler(Subscriber<Long> subscriber) {
+        temporaryCompositeSubscription.add(Observable.interval(0, 1, TimeUnit.SECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.io())
+            .unsubscribeOn(Schedulers.io())
+            .subscribe(subscriber));
     }
 
+    @Override
+    public void unsubscribeTemporary() {
+        temporaryCompositeSubscription.clear();
+    }
 
     @Override
-    public void unSubscribe() {
-        compositeSubscription.clear();
+    public void unsubscribeAll() {
+        temporaryCompositeSubscription.clear();
+        longRunningCompositeSubscription.clear();
     }
 }

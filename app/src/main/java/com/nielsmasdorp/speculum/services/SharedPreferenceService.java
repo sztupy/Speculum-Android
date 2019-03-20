@@ -26,7 +26,6 @@ public class SharedPreferenceService {
         editor.putString(Constants.SP_LOCATION_IDENTIFIER, configuration.getLocation());
         editor.putInt(Constants.SP_POLLING_IDENTIFIER, configuration.getPollingDelay());
         editor.putBoolean(Constants.SP_CELSIUS_IDENTIFIER, configuration.isCelsius());
-        editor.putBoolean(Constants.SP_VOICE_IDENTIFIER, configuration.isVoiceCommands());
 
         editor.apply();
     }
@@ -37,7 +36,6 @@ public class SharedPreferenceService {
                 .location(getLocation())
                 .pollingDelay(getPollingDelay())
                 .celsius(getCelsius())
-                .voiceCommands(getVoiceCommands())
                 .build();
 
         return configuration;
@@ -55,10 +53,6 @@ public class SharedPreferenceService {
         return preferences.getBoolean(Constants.SP_CELSIUS_IDENTIFIER, false);
     }
 
-    public boolean getVoiceCommands() {
-        return preferences.getBoolean(Constants.SP_VOICE_IDENTIFIER, false);
-    }
-
     public void removeConfiguration() {
 
         SharedPreferences.Editor editor = preferences.edit();
@@ -66,7 +60,6 @@ public class SharedPreferenceService {
         editor.remove(Constants.SP_LOCATION_IDENTIFIER);
         editor.remove(Constants.SP_POLLING_IDENTIFIER);
         editor.remove(Constants.SP_CELSIUS_IDENTIFIER);
-        editor.remove(Constants.SP_VOICE_IDENTIFIER);
 
         editor.apply();
     }

@@ -1,15 +1,25 @@
 package com.nielsmasdorp.speculum.activity;
 
+import android.animation.Animator;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.TargetApi;
+import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewStub;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -23,12 +33,19 @@ import com.nielsmasdorp.speculum.SpeculumApplication;
 import com.nielsmasdorp.speculum.models.Configuration;
 import com.nielsmasdorp.speculum.models.Weather;
 import com.nielsmasdorp.speculum.presenters.MainPresenter;
+import com.nielsmasdorp.speculum.receiver.LockScreenAdminReceiver;
+import com.nielsmasdorp.speculum.receiver.MotionDetectorReceiver;
 import com.nielsmasdorp.speculum.util.ASFObjectStore;
 import com.nielsmasdorp.speculum.util.Constants;
 import com.nielsmasdorp.speculum.views.MainView;
+import com.nielsmasdorp.speculum.views.WeatherDetailsView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 
+import butterknife.BindInt;
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -38,48 +55,58 @@ import butterknife.ButterKnife;
  */
 public class MainActivity extends AppCompatActivity implements MainView, View.OnSystemUiVisibilityChangeListener {
 
-    // @formatter:off
+    private static final String LOG_TAG = "MainActivity";
+
+    @BindView(R.id.time_layout) LinearLayout llTimeLayout;
+    @BindView(R.id.weather_main_layout) LinearLayout llWeatherMainLayout;
+    @BindView(R.id.weather_sub_layout) WeatherDetailsView llWeatherSubLayout;
+    @BindView(R.id.divider_1) View llDivider1;
+    @BindView(R.id.weather_stats_layout) LinearLayout llWeatherStatsLayout;
+    @BindView(R.id.divider_2) View llDivider2;
+    @BindView(R.id.calendar_layout) LinearLayout llCalendarLayout;
+    @BindView(R.id.divider_3) View llDivider3;
+
     @BindView(R.id.iv_current_weather) ImageView ivWeatherCondition;
     @BindView(R.id.tv_current_temp) TextView tvWeatherTemperature;
-    @BindView(R.id.weather_layout) LinearLayout llWeatherLayout;
     @BindView(R.id.tv_last_updated) TextView tvWeatherLastUpdated;
-    @BindView(R.id.iv_listening) ImageView ivListening;
 
-    @Nullable @BindView(R.id.weather_stats_layout) LinearLayout llWeatherStatsLayout;
-    @Nullable @BindView(R.id.calendar_layout) LinearLayout llCalendarLayout;
-    @Nullable @BindView(R.id.reddit_layout) LinearLayout llRedditLayout;
-    @Nullable @BindView(R.id.iv_forecast_weather1) ImageView ivDayOneIcon;
-    @Nullable @BindView(R.id.tv_forecast_temp1) TextView tvDayOneTemperature;
-    @Nullable @BindView(R.id.tv_forecast_date1) TextView tvDayOneDate;
-    @Nullable @BindView(R.id.iv_forecast_weather2) ImageView ivDayTwoIcon;
-    @Nullable @BindView(R.id.tv_forecast_temp2) TextView tvDayTwoTemperature;
-    @Nullable @BindView(R.id.tv_forecast_date2) TextView tvDayTwoDate;
-    @Nullable @BindView(R.id.iv_forecast_weather3) ImageView ivDayThreeIcon;
-    @Nullable @BindView(R.id.tv_forecast_temp3) TextView tvDayThreeTemperature;
-    @Nullable @BindView(R.id.tv_forecast_date3) TextView tvDayThreeDate;
-    @Nullable @BindView(R.id.iv_forecast_weather4) ImageView ivDayFourIcon;
-    @Nullable @BindView(R.id.tv_forecast_temp4) TextView tvDayFourTemperature;
-    @Nullable @BindView(R.id.tv_forecast_date4) TextView tvDayFourDate;
     @Nullable @BindView(R.id.tv_stats_wind) TextView tvWeatherWind;
     @Nullable @BindView(R.id.tv_stats_humidity) TextView tvWeatherHumidity;
     @Nullable @BindView(R.id.tv_stats_pressure) TextView tvWeatherPressure;
     @Nullable @BindView(R.id.tv_stats_visibility) TextView tvWeatherVisibility;
     @Nullable @BindView(R.id.tv_calendar_event) TextView tvCalendarEvent;
-    @Nullable @BindView(R.id.tv_reddit_post_title) TextView tvRedditPostTitle;
-    @Nullable @BindView(R.id.tv_reddit_post_votes) TextView tvRedditPostVotes;
 
-    @BindString(R.string.give_command) String giveCommand;
-    @BindString(R.string.listening) String listening;
-    @BindString(R.string.command_understood) String commandUnderstood;
-    @BindString(R.string.executing) String executing;
+    @Nullable
+    BroadcastReceiver motionDetectorReceiver;
+
     @BindString(R.string.last_updated) String lastUpdated;
-    // @formatter:on
+
+    @BindInt(android.R.integer.config_mediumAnimTime) int mediumAnimTime;
+    @BindInt(android.R.integer.config_longAnimTime) int longAnimTime;
 
     @Inject
     MainPresenter presenter;
 
     @Inject
     ASFObjectStore<Configuration> objectStore;
+
+    @Nullable
+    PowerManager.WakeLock wakeLock;
+
+    @Nullable
+    AnimatorSet animator = null;
+
+    View[] layoutOrder;
+
+    enum PageState {
+        HIDDEN,
+        OPEN_ANIM,
+        OPEN,
+        CLOSE_ANIM
+    }
+
+    private long activatedTime = 0;
+    private PageState pageState = PageState.HIDDEN;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,8 +118,7 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
         Configuration configuration = new Configuration.Builder().
                 celsius(true).
                 location(getString(R.string.maps_location)).
-                pollingDelay(3600).
-                voiceCommands(false).
+                pollingDelay(10).
                 build();
 
         ViewStub viewStub = (ViewStub) findViewById(R.id.stub_verbose);
@@ -100,10 +126,17 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
 
         ButterKnife.bind(this);
 
-        //never sleep
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        motionDetectorReceiver = new MotionDetectorReceiver();
+        IntentFilter motionDetectorFilter = new IntentFilter("org.motion.detector.ACTION_GLOBAL_BROADCAST");
+        this.registerReceiver(motionDetectorReceiver, motionDetectorFilter);
 
         presenter.setConfiguration(configuration);
+        presenter.start(Assent.isPermissionGranted(Assent.READ_CALENDAR));
+
+        layoutOrder = new View[]{
+                llTimeLayout, llWeatherMainLayout, llWeatherSubLayout, llDivider1, llWeatherStatsLayout, llDivider2,
+                llCalendarLayout, llDivider3
+        };
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -121,21 +154,8 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
     }
 
     @Override
-    public void showListening() {
-        ivListening.setVisibility(View.VISIBLE);
-        ivListening.startAnimation(AnimationUtils.loadAnimation(this, R.anim.pulse));
-    }
-
-    @Override
-    public void hideListening() {
-        ivListening.clearAnimation();
-        ivListening.setVisibility(View.INVISIBLE);
-    }
-
-    @Override
     @SuppressWarnings("all")
     public void displayCurrentWeather(Weather weather) {
-
         // Current simple weather
         this.ivWeatherCondition.setImageResource(weather.getIconId());
         this.tvWeatherTemperature.setText(weather.getTemperature());
@@ -146,23 +166,17 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
         this.tvWeatherHumidity.setText(weather.getHumidityInfo());
         this.tvWeatherPressure.setText(weather.getPressureInfo());
         this.tvWeatherVisibility.setText(weather.getVisibilityInfo());
-        // Forecast
-        this.tvDayOneDate.setText(weather.getForecast().get(0).getDate());
-        this.tvDayOneTemperature.setText(weather.getForecast().get(0).getTemperature());
-        this.ivDayOneIcon.setImageResource(weather.getForecast().get(0).getIconId());
-        this.tvDayTwoDate.setText(weather.getForecast().get(1).getDate());
-        this.tvDayTwoTemperature.setText(weather.getForecast().get(1).getTemperature());
-        this.ivDayTwoIcon.setImageResource(weather.getForecast().get(1).getIconId());
-        this.tvDayThreeDate.setText(weather.getForecast().get(2).getDate());
-        this.tvDayThreeTemperature.setText(weather.getForecast().get(2).getTemperature());
-        this.ivDayThreeIcon.setImageResource(weather.getForecast().get(2).getIconId());
-        this.tvDayFourDate.setText(weather.getForecast().get(3).getDate());
-        this.tvDayFourTemperature.setText(weather.getForecast().get(3).getTemperature());
-        this.ivDayFourIcon.setImageResource(weather.getForecast().get(2).getIconId());
 
-        if (this.llWeatherLayout.getVisibility() != View.VISIBLE) {
-            this.llWeatherLayout.setVisibility(View.VISIBLE);
-            this.llWeatherStatsLayout.setVisibility(View.VISIBLE);
+        this.llWeatherSubLayout.setWeather(weather);
+    }
+
+    @Override
+    public void updateTimeRemaining() {
+        long remaining = activatedTime - System.currentTimeMillis() + 30000;
+
+        Log.i(LOG_TAG, "TICK " + remaining);
+        if (remaining < 0 && pageState.equals(PageState.OPEN)) {
+            initiateCloseAnimation();
         }
     }
 
@@ -184,15 +198,25 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
         super.onResume();
         Assent.setActivity(this, this);
         hideSystemUI();
-        presenter.start(Assent.isPermissionGranted(Assent.READ_CALENDAR));
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        acquireWakeLock();
+        Log.i(LOG_TAG, "OnResume Called");
+        if (pageState == PageState.HIDDEN || pageState == PageState.CLOSE_ANIM) {
+            initiateShowAnimation();
+        }
+        presenter.foreground();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        presenter.finish();
+        Log.i(LOG_TAG, "OnPause Called");
+
         if (isFinishing())
             Assent.setActivity(this, null);
+
+        releaseWakeLock();
+        presenter.background();
     }
 
     @Override
@@ -205,6 +229,125 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (motionDetectorReceiver != null) {
+            this.unregisterReceiver(motionDetectorReceiver);
+            motionDetectorReceiver = null;
+        }
+        presenter.finish();
         ((SpeculumApplication) getApplication()).releaseMainComponent();
+    }
+
+    private void initiateShowAnimation() {
+        if (pageState == PageState.CLOSE_ANIM) {
+            if (animator != null) {
+                animator.cancel();
+                animator = null;
+            }
+        }
+
+        animator = new AnimatorSet();
+
+        for (int i = 0; i< layoutOrder.length; i++) {
+            layoutOrder[i].setVisibility(View.VISIBLE);
+            if (pageState == PageState.HIDDEN) {
+                layoutOrder[i].setAlpha(0);
+            }
+
+            ObjectAnimator anim = ObjectAnimator.ofFloat(layoutOrder[i], "alpha", 1);
+            anim.setDuration(longAnimTime * 2);
+
+            animator.play(anim).after(pageState == PageState.HIDDEN ? mediumAnimTime * i : 0);
+        }
+
+        pageState = PageState.OPEN_ANIM;
+
+        animator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animator) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animator) {
+                animator = null;
+                pageState = PageState.OPEN;
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animator) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animator) {
+
+            }
+        });
+        animator.start();
+    }
+
+    private void initiateCloseAnimation() {
+        pageState = PageState.CLOSE_ANIM;
+
+        animator = new AnimatorSet();
+
+        for (int i = 0; i<layoutOrder.length; i++) {
+            layoutOrder[i].setVisibility(View.VISIBLE);
+            layoutOrder[i].setAlpha(1);
+
+            ObjectAnimator anim = ObjectAnimator.ofFloat(layoutOrder[i], "alpha", 0);
+            anim.setDuration(longAnimTime * 2);
+
+            animator.play(anim).after(mediumAnimTime * (layoutOrder.length - i));
+        }
+
+        animator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animator) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animator) {
+                long remaining = activatedTime - System.currentTimeMillis() + 30000;
+
+                if (remaining < 0) {
+                    pageState = PageState.HIDDEN;
+                    animator = null;
+                    DevicePolicyManager mDPM = (DevicePolicyManager) MainActivity.this.getSystemService(Context.DEVICE_POLICY_SERVICE);
+                    if (mDPM.isAdminActive(new ComponentName(MainActivity.this, LockScreenAdminReceiver.class))) {
+                        Log.i(LOG_TAG, "LOCK");
+                        mDPM.lockNow();
+                    }
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animator) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animator) {
+
+            }
+        });
+        animator.start();
+    }
+
+    private void acquireWakeLock() {
+        if (wakeLock == null) {
+            wakeLock = ((PowerManager) getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "app:" + LOG_TAG);
+        }
+        if (!wakeLock.isHeld()) {
+            wakeLock.acquire();
+        }
+        activatedTime = System.currentTimeMillis();
+    }
+
+    private void releaseWakeLock() {
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (wakeLock != null) {
+            wakeLock.release();
+            wakeLock = null;
+        }
     }
 }

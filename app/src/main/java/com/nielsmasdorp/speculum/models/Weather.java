@@ -98,5 +98,20 @@ public class Weather {
     public List<ForecastDayWeather> getForecast() {
         return forecast;
     }
+
+    @Override
+    public String toString() {
+        return "Weather{" +
+                "iconId=" + iconId +
+                ", temperature='" + temperature + '\'' +
+                ", summary='" + summary + '\'' +
+                ", lastUpdated='" + lastUpdated + '\'' +
+                ", windInfo='" + windInfo + '\'' +
+                ", humidityInfo='" + humidityInfo + '\'' +
+                ", pressureInfo='" + pressureInfo + '\'' +
+                ", visibilityInfo='" + visibilityInfo + '\'' +
+                ", forecast=" + forecast +
+                '}';
+    }
 }
 

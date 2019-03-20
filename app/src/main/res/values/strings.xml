@@ -10,10 +10,6 @@
 
     <!--Main Activity-->
     <string name="last_updated">Last updated:</string>
-    <string name="listening">Listening..</string>
-    <string name="give_command">Give a command</string>
-    <string name="command_understood">Command understood</string>
-    <string name="executing">Executing..</string>
     <string name="tomorrow">Tomorrow</string>
 
 </resources>

@@ -15,7 +15,9 @@ public interface MainInteractor {
 
     void loadWeather(String location, boolean celsius, int updateDelay, String apiKey, Subscriber<Weather> subscriber);
 
-    void getAssetsDirForSpeechRecognizer(Subscriber<File> subscriber);
+    void loadSecondScheduler(Subscriber<Long> subscriber);
 
-    void unSubscribe();
+    void unsubscribeAll();
+
+    void unsubscribeTemporary();
 }
