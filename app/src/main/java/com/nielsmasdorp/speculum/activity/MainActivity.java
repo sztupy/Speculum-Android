@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
         Configuration configuration = new Configuration.Builder().
                 celsius(true).
                 location(getString(R.string.maps_location)).
-                pollingDelay(10).
+                pollingDelay(5).
                 build();
 
         ViewStub viewStub = (ViewStub) findViewById(R.id.stub_verbose);
