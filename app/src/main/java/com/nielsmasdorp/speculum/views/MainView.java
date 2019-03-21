@@ -1,5 +1,6 @@
 package com.nielsmasdorp.speculum.views;
 
+import com.nielsmasdorp.speculum.models.TravelDetails;
 import com.nielsmasdorp.speculum.models.Weather;
 
 /**
@@ -11,4 +12,8 @@ public interface MainView extends BaseView {
 	void displayCalendarEvents(String events);
 
 	void updateTimeRemaining();
+
+	void ping();
+
+	void updateRoutes(int id, TravelDetails routeList);
 }

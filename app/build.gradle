@@ -49,6 +49,7 @@ dependencies {
     compile "info.android15.solid:streams:$solidVersion"
     compile "info.android15.solid:collections:$solidVersion"
 
+    compile 'com.android.support:gridlayout-v7:25.0.1'
     compile 'com.android.support:appcompat-v7:25.0.1'
     compile 'com.android.support:design:25.0.1'
 

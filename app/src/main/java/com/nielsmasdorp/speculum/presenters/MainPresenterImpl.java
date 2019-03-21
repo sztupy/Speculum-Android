@@ -10,6 +10,8 @@ import com.nielsmasdorp.speculum.R;
 import com.nielsmasdorp.speculum.activity.MainActivity;
 import com.nielsmasdorp.speculum.interactor.MainInteractor;
 import com.nielsmasdorp.speculum.models.Configuration;
+import com.nielsmasdorp.speculum.models.TravelDetails;
+import com.nielsmasdorp.speculum.models.TravelRoute;
 import com.nielsmasdorp.speculum.models.Weather;
 import com.nielsmasdorp.speculum.util.Constants;
 import com.nielsmasdorp.speculum.views.MainView;
@@ -17,6 +19,7 @@ import com.nielsmasdorp.speculum.views.MainView;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import edu.cmu.pocketsphinx.Hypothesis;
@@ -66,7 +69,23 @@ public class MainPresenterImpl implements MainPresenter {
             if (hasAccessToCalendar) {
                 interactor.loadCalendarEvents(configuration.getPollingDelay(), new CalendarEventSubscriber());
             }
+            interactor.loadDepartureMap(
+                    configuration.getPollingDelay(),
+                    ((MainActivity)view).getString(R.string.google_maps_from_location),
+                    ((MainActivity)view).getString(R.string.google_maps_to_location_1_dest),
+                    ((MainActivity)view).getString(R.string.google_maps_to_location_1_name),
+                    ((MainActivity)view).getString(R.string.google_maps_api_key),
+                    new DepartureSubscriber(0)
+            );
 
+            interactor.loadDepartureMap(
+                    configuration.getPollingDelay(),
+                    ((MainActivity)view).getString(R.string.google_maps_from_location),
+                    ((MainActivity)view).getString(R.string.google_maps_to_location_2_dest),
+                    ((MainActivity)view).getString(R.string.google_maps_to_location_2_name),
+                    ((MainActivity)view).getString(R.string.google_maps_api_key),
+                    new DepartureSubscriber(1)
+            );
         }
     }
 
@@ -134,6 +153,29 @@ public class MainPresenterImpl implements MainPresenter {
         @Override
         public void onNext(Long events) {
             view.updateTimeRemaining();
+        }
+    }
+
+    private final class DepartureSubscriber extends Subscriber<TravelDetails> {
+
+        private int id;
+
+        public DepartureSubscriber(int id) {
+            this.id = id;
+        }
+
+        @Override
+        public void onCompleted() {
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            view.showError(e.getMessage());
+        }
+
+        @Override
+        public void onNext(TravelDetails routes) {
+            view.updateRoutes(id, routes);
         }
     }
 }

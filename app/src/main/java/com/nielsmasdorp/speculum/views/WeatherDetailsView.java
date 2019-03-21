@@ -1,5 +1,6 @@
 package com.nielsmasdorp.speculum.views;
 
+import android.animation.ArgbEvaluator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -28,6 +29,7 @@ public class WeatherDetailsView extends View {
     private Paint dateLine;
     private Paint cloudLine;
     private SimpleDateFormat format;
+    private ArgbEvaluator argbEvaluator;
 
     public WeatherDetailsView(Context context) {
         super(context);
@@ -51,12 +53,11 @@ public class WeatherDetailsView extends View {
         temperatureLine.setStyle(Paint.Style.STROKE);
 
         precipitationBar = new Paint(Paint.ANTI_ALIAS_FLAG);
-        precipitationBar.setColor(Color.CYAN);
+        precipitationBar.setColor(Color.rgb(64,64,255));
         precipitationBar.setStyle(Paint.Style.FILL);
 
         cloudLine = new Paint(Paint.ANTI_ALIAS_FLAG);
-        cloudLine.setColor(Color.LTGRAY);
-        cloudLine.setAlpha(70);
+        cloudLine.setColor(Color.YELLOW);
         cloudLine.setStrokeWidth(2);
         cloudLine.setStyle(Paint.Style.STROKE);
 
@@ -68,6 +69,8 @@ public class WeatherDetailsView extends View {
 
         format = new java.text.SimpleDateFormat("dd MMM E", Locale.getDefault());
         format.setTimeZone(TimeZone.getDefault());
+
+        argbEvaluator = new ArgbEvaluator();
     }
 
     @Override
@@ -125,7 +128,7 @@ public class WeatherDetailsView extends View {
         for (int i = 0; i < weather.getForecast().size(); i++) {
             ForecastDayWeather first = weather.getForecast().get(i);
 
-            float firstAlpha = (float)(0.25 + Math.sqrt(first.getPrecipIntensity())/7);
+            float firstAlpha = (float)(0.5 + Math.sqrt(first.getPrecipIntensity())/10);
             if (firstAlpha>1) firstAlpha = 1;
 
             float firstSize = displayBottom - (displayBottom - displayTop) * first.getPrecipProbability();
@@ -143,8 +146,14 @@ public class WeatherDetailsView extends View {
             ForecastDayWeather first = weather.getForecast().get(i);
             ForecastDayWeather second = weather.getForecast().get(i+1);
 
-            float firstPos = displayBottom - (displayBottom - displayTop) * first.getCloudCover();
-            float secondPos = displayBottom - (displayBottom - displayTop) * second.getCloudCover();
+            float firstPos = displayBottom - (displayBottom - displayTop) * (1-first.getCloudCover());
+            float secondPos = displayBottom - (displayBottom - displayTop) * (1-second.getCloudCover());
+
+            float red = 0.5f + 0.5f * first.getDayOrNight();
+            float green = 0.5f + 0.5f * first.getDayOrNight();
+            float blue = 0.5f - 0.5f * first.getDayOrNight();
+
+            cloudLine.setARGB(255,Math.round(255*red), Math.round(255*green), Math.round(255*blue));
 
             canvas.drawLine(pos, firstPos, pos+length, secondPos, cloudLine);
 

@@ -55,13 +55,15 @@ public class ForecastIOService {
         boolean is24HourFormat = DateFormat.is24HourFormat(application);
 
         String distanceUnit = metric ? Constants.DISTANCE_METRIC : Constants.DISTANCE_IMPERIAL;
-        String pressureUnit = metric ? Constants.PRESSURE_METRIC : Constants.PRESSURE_IMPERIAL;
         String speedUnit = metric ? Constants.SPEED_METRIC : Constants.SPEED_IMPERIAL;
         String temperatureUnit = metric ? Constants.TEMPERATURE_METRIC : Constants.TEMPERATURE_IMPERIAL;
 
         // Convert degrees to cardinal directions for wind
         String[] directions = {"N", "NE", "E", "SE", "S", "SW", "W", "NW", "N"};
         String direction = directions[(int) Math.round((response.getCurrently().getWindBearing() % 360) / 45)];
+
+        int sunsetTime = response.getDaily().getData().get(0).getSunsetTime() == null ? 86400 : response.getDaily().getData().get(0).getSunsetTime() % 86400;
+        int sunriseTime = response.getDaily().getData().get(0).getSunriseTime() == null ? 0 : response.getDaily().getData().get(0).getSunriseTime() % 86400;
 
         List<ForecastDayWeather> forecast = new ArrayList<>();
 
@@ -71,22 +73,42 @@ public class ForecastIOService {
             float precipProbability = f.getPrecipProbability() == null ? 0 : f.getPrecipProbability();
             float precipIntensity = f.getPrecipIntensity() == null ? 0 : f.getPrecipIntensity();
             float cloudCover = f.getCloudCover() == null ? 0 : f.getCloudCover();
+
+            int timeOfDay = f.getTime() % 86400;
+
+            float dayOrNight = 1;
+
+            if (timeOfDay<sunriseTime-10800) {
+                dayOrNight = 0;
+            } else if (timeOfDay>=sunriseTime-10800 && timeOfDay<sunriseTime) {
+                dayOrNight = 1-(float)(sunriseTime-timeOfDay) / 10800;
+            } else if (timeOfDay>=sunsetTime && timeOfDay<sunsetTime+10800) {
+                dayOrNight = 1-(float)(timeOfDay-sunsetTime) / 10800;
+            } else if (timeOfDay>=sunsetTime+10800) {
+                dayOrNight = 0;
+            }
             int iconId = iconGenerator.getIcon(f.getIcon());
             maxHours -= 1;
             if (maxHours>0) {
-                forecast.add(new ForecastDayWeather(iconId, temperature, precipProbability, precipIntensity, cloudCover, new Date((long) f.getTime() * 1000)));
+                forecast.add(new ForecastDayWeather(iconId, temperature, precipProbability, precipIntensity, cloudCover, dayOrNight, new Date((long) f.getTime() * 1000)));
             }
+        }
+
+        List<ForecastDayWeather> hourForecast = new ArrayList<>();
+        for (DayForecast f : response.getMinutely().getData()) {
+            float precipProbability = f.getPrecipProbability() == null ? 0 : f.getPrecipProbability();
+            float precipIntensity = f.getPrecipIntensity() == null ? 0 : f.getPrecipIntensity();
+            hourForecast.add(new ForecastDayWeather(0, 0, precipProbability, precipIntensity, 0, 0, new Date((long) f.getTime() * 1000)));
         }
 
         return Observable.just(new Weather.Builder()
                 .iconId(iconGenerator.getIcon(response.getCurrently().getIcon()))
-                .summary(response.getCurrently().getSummary())
                 .temperature(String.format(Locale.getDefault(), "%.1fº%s", response.getCurrently().getTemperature(), temperatureUnit))
                 .lastUpdated(new SimpleDateFormat(!is24HourFormat ? "h:mm" : "H:mm", Locale.getDefault()).format(new Date((long) response.getCurrently().getTime() * 1000)))
                 .windInfo(response.getCurrently().getWindSpeed().intValue() + speedUnit + " " + direction + " | " + response.getCurrently().getApparentTemperature().intValue() + "º" + temperatureUnit)
                 .humidityInfo((int) (response.getCurrently().getHumidity() * 100) + "%")
-                .pressureInfo(response.getCurrently().getPressure().intValue() + pressureUnit)
                 .visibilityInfo(response.getCurrently().getVisibility().intValue() + distanceUnit)
+                .hourForecast(hourForecast)
                 .forecast(forecast)
                 .build());
     }

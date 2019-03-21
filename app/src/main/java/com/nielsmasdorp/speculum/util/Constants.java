@@ -8,6 +8,7 @@ public class Constants {
     /**
      * Base urls
      */
+    public static final String GOOGLE_MAPS_BASE_URL = "https://maps.googleapis.com/maps/api/";
     public static final String FORECAST_BASE_URL = "https://api.forecast.io/forecast/";
 
     /**

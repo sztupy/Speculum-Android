@@ -9,6 +9,7 @@ import com.nielsmasdorp.speculum.presenters.MainPresenter;
 import com.nielsmasdorp.speculum.presenters.MainPresenterImpl;
 import com.nielsmasdorp.speculum.services.ForecastIOService;
 import com.nielsmasdorp.speculum.services.GoogleCalendarService;
+import com.nielsmasdorp.speculum.services.GoogleMapsDestinationService;
 import com.nielsmasdorp.speculum.util.WeatherIconGenerator;
 import com.nielsmasdorp.speculum.views.MainView;
 
@@ -40,8 +41,9 @@ public class MainModule {
     public MainInteractor provideMainInteractor(Application application,
                                                 ForecastIOService forecastIOService,
                                                 GoogleCalendarService googleMapService,
+                                                GoogleMapsDestinationService googleMapsDestinationService,
                                                 WeatherIconGenerator iconGenerator) {
 
-        return new MainInteractorImpl(application, forecastIOService, googleMapService, iconGenerator);
+        return new MainInteractorImpl(application, forecastIOService, googleMapService, iconGenerator, googleMapsDestinationService);
     }
 }

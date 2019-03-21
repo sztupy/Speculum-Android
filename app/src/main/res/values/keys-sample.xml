@@ -2,8 +2,15 @@
 
 <resources>
     <!--
-    <string name="forecast_api_key" translatable="false">your forecast darksky api key</string>
-    <string name="maps_location" translatable="false">55.9533,-3.1883</string>
+    <string name="forecast_api_key" translatable="false">Dark SKY API Key</string>
+    <string name="maps_location" translatable="false">55.908335,-3.228302</string>
+
+    <string name="google_maps_api_key" translatable="false">Google Platform/Maps Key with Directions API enabled</string>
+    <string name="google_maps_from_location" translatable="false">55.908335,-3.228302</string>
+    <string name="google_maps_to_location_1_dest" translatable="false">55.942925,-3.185708</string>
+    <string name="google_maps_to_location_1_name" translatable="false">University</string>
+    <string name="google_maps_to_location_2_dest" translatable="false">55.946511,-3.205745</string>
+    <string name="google_maps_to_location_2_name" translatable="false">Filmhouse</string>
     -->
 </resources>
 

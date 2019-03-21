@@ -7,6 +7,7 @@ package com.nielsmasdorp.speculum.models.forecast;
 public class ForecastResponse {
 
     private Currently currently;
+    private Forecast minutely;
     private Forecast daily;
     private Forecast hourly;
 
@@ -14,8 +15,8 @@ public class ForecastResponse {
         return currently;
     }
 
-    public Forecast getForecast() {
-        return daily;
+    public Forecast getMinutely() {
+        return minutely;
     }
 
     public Forecast getDaily() {
@@ -28,6 +29,7 @@ public class ForecastResponse {
     public String toString() {
         return "ForecastResponse{" +
                 "currently=" + currently +
+                ", minutely=" + minutely +
                 ", daily=" + daily +
                 ", hourly=" + hourly +
                 '}';

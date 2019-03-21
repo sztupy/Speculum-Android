@@ -14,6 +14,8 @@ public class DayForecast {
     private Float apparentTemperature;
     private Float precipIntensity;
     private Float precipProbability;
+    private Integer sunriseTime;
+    private Integer sunsetTime;
     private Float cloudCover;
 
     public Integer getTime() {
@@ -60,6 +62,14 @@ public class DayForecast {
         return cloudCover;
     }
 
+    public Integer getSunriseTime() {
+        return sunriseTime;
+    }
+
+    public Integer getSunsetTime() {
+        return sunsetTime;
+    }
+
     @Override
     public String toString() {
         return "DayForecast{" +
@@ -71,6 +81,8 @@ public class DayForecast {
                 ", apparentTemperature=" + apparentTemperature +
                 ", precipIntensity=" + precipIntensity +
                 ", precipProbability=" + precipProbability +
+                ", sunriseTime=" + sunriseTime +
+                ", sunsetTime=" + sunsetTime +
                 ", cloudCover=" + cloudCover +
                 '}';
     }

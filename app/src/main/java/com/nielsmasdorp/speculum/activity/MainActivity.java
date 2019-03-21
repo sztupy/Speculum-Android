@@ -16,11 +16,13 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewStub;
 import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.AnimationUtils;
+import android.widget.CalendarView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -31,6 +33,8 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.nielsmasdorp.speculum.R;
 import com.nielsmasdorp.speculum.SpeculumApplication;
 import com.nielsmasdorp.speculum.models.Configuration;
+import com.nielsmasdorp.speculum.models.TravelDetails;
+import com.nielsmasdorp.speculum.models.TravelRoute;
 import com.nielsmasdorp.speculum.models.Weather;
 import com.nielsmasdorp.speculum.presenters.MainPresenter;
 import com.nielsmasdorp.speculum.receiver.LockScreenAdminReceiver;
@@ -38,10 +42,15 @@ import com.nielsmasdorp.speculum.receiver.MotionDetectorReceiver;
 import com.nielsmasdorp.speculum.util.ASFObjectStore;
 import com.nielsmasdorp.speculum.util.Constants;
 import com.nielsmasdorp.speculum.views.MainView;
+import com.nielsmasdorp.speculum.views.NoteView;
+import com.nielsmasdorp.speculum.views.PrecipitationView;
+import com.nielsmasdorp.speculum.views.RouteView;
 import com.nielsmasdorp.speculum.views.WeatherDetailsView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.inject.Inject;
 
@@ -57,22 +66,29 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
 
     private static final String LOG_TAG = "MainActivity";
 
-    @BindView(R.id.time_layout) LinearLayout llTimeLayout;
-    @BindView(R.id.weather_main_layout) LinearLayout llWeatherMainLayout;
-    @BindView(R.id.weather_sub_layout) WeatherDetailsView llWeatherSubLayout;
+    @BindView(R.id.time_layout) View llTimeLayout;
+    @BindView(R.id.weather_main_layout) View llWeatherMainLayout;
+    @BindView(R.id.weather_precipitation) PrecipitationView llWeatherPrecipitation;
+    @BindView(R.id.weather_details) WeatherDetailsView llWeatherDetails;
     @BindView(R.id.divider_1) View llDivider1;
-    @BindView(R.id.weather_stats_layout) LinearLayout llWeatherStatsLayout;
+    @BindView(R.id.weather_stats_layout) View llWeatherStatsLayout;
     @BindView(R.id.divider_2) View llDivider2;
-    @BindView(R.id.calendar_layout) LinearLayout llCalendarLayout;
+    @BindView(R.id.calendar_layout) View llCalendarLayout;
     @BindView(R.id.divider_3) View llDivider3;
+    @BindView(R.id.routes_1_layout) RouteView llRoutes1Layout;
+    @BindView(R.id.divider_4) View llDivider4;
+    @BindView(R.id.routes_2_layout) RouteView llRoutes2Layout;
+    @BindView(R.id.divider_5) View llDivider5;
+    @BindView(R.id.calendar_field_layout) View llCalendarFieldLayout;
 
     @BindView(R.id.iv_current_weather) ImageView ivWeatherCondition;
     @BindView(R.id.tv_current_temp) TextView tvWeatherTemperature;
     @BindView(R.id.tv_last_updated) TextView tvWeatherLastUpdated;
+    @BindView(R.id.calendar) CalendarView cvCalendarView;
+    @BindView(R.id.notes) NoteView notesView;
 
     @Nullable @BindView(R.id.tv_stats_wind) TextView tvWeatherWind;
     @Nullable @BindView(R.id.tv_stats_humidity) TextView tvWeatherHumidity;
-    @Nullable @BindView(R.id.tv_stats_pressure) TextView tvWeatherPressure;
     @Nullable @BindView(R.id.tv_stats_visibility) TextView tvWeatherVisibility;
     @Nullable @BindView(R.id.tv_calendar_event) TextView tvCalendarEvent;
 
@@ -82,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
     @BindString(R.string.last_updated) String lastUpdated;
 
     @BindInt(android.R.integer.config_mediumAnimTime) int mediumAnimTime;
-    @BindInt(android.R.integer.config_longAnimTime) int longAnimTime;
+    @BindInt(android.R.integer.config_shortAnimTime) int shortAnimTime;
 
     @Inject
     MainPresenter presenter;
@@ -133,9 +149,11 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
         presenter.setConfiguration(configuration);
         presenter.start(Assent.isPermissionGranted(Assent.READ_CALENDAR));
 
+        notesView.setMainView(this);
+
         layoutOrder = new View[]{
-                llTimeLayout, llWeatherMainLayout, llWeatherSubLayout, llDivider1, llWeatherStatsLayout, llDivider2,
-                llCalendarLayout, llDivider3
+                llTimeLayout, llWeatherMainLayout, llWeatherDetails, llDivider1, llWeatherStatsLayout, llDivider2,
+                llCalendarLayout, llDivider3, llRoutes1Layout, llDivider4, llRoutes2Layout, llDivider5, llCalendarFieldLayout
         };
     }
 
@@ -164,19 +182,30 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
         // More weather info
         this.tvWeatherWind.setText(weather.getWindInfo());
         this.tvWeatherHumidity.setText(weather.getHumidityInfo());
-        this.tvWeatherPressure.setText(weather.getPressureInfo());
         this.tvWeatherVisibility.setText(weather.getVisibilityInfo());
 
-        this.llWeatherSubLayout.setWeather(weather);
+        this.llWeatherDetails.setWeather(weather);
+        this.llWeatherPrecipitation.setWeather(weather);
     }
 
     @Override
     public void updateTimeRemaining() {
+        cvCalendarView.setDate(System.currentTimeMillis());
+
         long remaining = activatedTime - System.currentTimeMillis() + 30000;
 
         Log.i(LOG_TAG, "TICK " + remaining);
         if (remaining < 0 && pageState.equals(PageState.OPEN)) {
             initiateCloseAnimation();
+        }
+    }
+
+    @Override
+    public void updateRoutes(int id, TravelDetails routeList) {
+        if (id==0) {
+            llRoutes1Layout.updateRoutes(routeList);
+        } else {
+            llRoutes2Layout.updateRoutes(routeList);
         }
     }
 
@@ -254,9 +283,9 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
             }
 
             ObjectAnimator anim = ObjectAnimator.ofFloat(layoutOrder[i], "alpha", 1);
-            anim.setDuration(longAnimTime * 2);
+            anim.setDuration(mediumAnimTime);
 
-            animator.play(anim).after(pageState == PageState.HIDDEN ? mediumAnimTime * i : 0);
+            animator.play(anim).after(pageState == PageState.HIDDEN ? shortAnimTime * i : 0);
         }
 
         pageState = PageState.OPEN_ANIM;
@@ -295,9 +324,9 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
             layoutOrder[i].setAlpha(1);
 
             ObjectAnimator anim = ObjectAnimator.ofFloat(layoutOrder[i], "alpha", 0);
-            anim.setDuration(longAnimTime * 2);
+            anim.setDuration(mediumAnimTime);
 
-            animator.play(anim).after(mediumAnimTime * (layoutOrder.length - i));
+            animator.play(anim).after(shortAnimTime * (layoutOrder.length - i));
         }
 
         animator.addListener(new Animator.AnimatorListener() {
@@ -340,7 +369,7 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
         if (!wakeLock.isHeld()) {
             wakeLock.acquire();
         }
-        activatedTime = System.currentTimeMillis();
+        ping();
     }
 
     private void releaseWakeLock() {
@@ -349,5 +378,16 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
             wakeLock.release();
             wakeLock = null;
         }
+    }
+
+    @Override
+    public void ping() {
+        activatedTime = System.currentTimeMillis();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        ping();
+        return super.onTouchEvent(event);
     }
 }

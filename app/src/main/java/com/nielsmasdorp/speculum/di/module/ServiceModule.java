@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.nielsmasdorp.speculum.services.ForecastIOService;
 import com.nielsmasdorp.speculum.services.GoogleCalendarService;
+import com.nielsmasdorp.speculum.services.GoogleMapsDestinationService;
 
 import javax.inject.Singleton;
 
@@ -28,5 +29,11 @@ public class ServiceModule {
     public GoogleCalendarService provideGoogleCalendarService(Application application) {
 
         return new GoogleCalendarService(application);
+    }
+
+    @Provides
+    @Singleton
+    public GoogleMapsDestinationService provideGoogleMapsDestinationService() {
+        return new GoogleMapsDestinationService();
     }
 }

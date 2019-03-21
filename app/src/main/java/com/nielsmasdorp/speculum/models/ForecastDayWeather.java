@@ -12,14 +12,16 @@ public class ForecastDayWeather {
     private float precipProbability;
     private float precipIntensity;
     private float cloudCover;
+    private float dayOrNight;
     private Date date;
 
-    public ForecastDayWeather(int iconId, float temperature, float precipProbability, float precipIntensity, float cloudCover, Date date) {
+    public ForecastDayWeather(int iconId, float temperature, float precipProbability, float precipIntensity, float cloudCover, float dayOrNight, Date date) {
         this.iconId = iconId;
         this.temperature = temperature;
         this.precipProbability = precipProbability;
         this.precipIntensity = precipIntensity;
         this.cloudCover = cloudCover;
+        this.dayOrNight = dayOrNight;
         this.date = date;
     }
 
@@ -41,6 +43,10 @@ public class ForecastDayWeather {
 
     public float getPrecipIntensity() {
         return precipIntensity;
+    }
+
+    public float getDayOrNight() {
+        return dayOrNight;
     }
 
     public float getCloudCover() {

@@ -1,0 +1,120 @@
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+    <android.support.v7.widget.GridLayout
+        android:id="@+id/routes_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:columnCount="3"
+        app:rowCount="1">
+
+        <TextView android:id="@+id/route_1_start"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="0dp"
+            android:paddingEnd="10dp" />
+        <TextView android:id="@+id/route_1_details"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            app:layout_gravity="fill" />
+        <TextView android:id="@+id/route_1_end"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="10dp"
+            android:paddingEnd="0dp" />
+
+        <TextView android:id="@+id/route_2_start"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="0dp"
+            android:paddingEnd="10dp"/>
+        <TextView android:id="@+id/route_2_details"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            app:layout_gravity="fill" />
+        <TextView android:id="@+id/route_2_end"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="10dp"
+            android:paddingEnd="0dp"/>
+
+        <TextView android:id="@+id/route_3_start"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="0dp"
+            android:paddingEnd="10dp"/>
+        <TextView android:id="@+id/route_3_details"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            app:layout_gravity="fill"/>
+        <TextView android:id="@+id/route_3_end"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="10dp"
+            android:paddingEnd="0dp"/>
+
+        <TextView android:id="@+id/route_4_start"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="0dp"
+            android:paddingEnd="10dp"/>
+        <TextView android:id="@+id/route_4_details"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            app:layout_gravity="fill"/>
+        <TextView android:id="@+id/route_4_end"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="10dp"
+            android:paddingEnd="0dp"/>
+
+    </android.support.v7.widget.GridLayout>
+
+    <TextView
+        android:id="@+id/tv_route_last_updated"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-thin"
+        android:paddingTop="4dp"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:textStyle="italic"
+        android:layout_gravity="end"/>
+    </LinearLayout>
+</FrameLayout>
