@@ -8,7 +8,9 @@ import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -86,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
     @BindView(R.id.tv_last_updated) TextView tvWeatherLastUpdated;
     @BindView(R.id.calendar) CalendarView cvCalendarView;
     @BindView(R.id.notes) NoteView notesView;
+    @BindView(R.id.iv_battery) ImageView ivBattery;
 
     @Nullable @BindView(R.id.tv_stats_wind) TextView tvWeatherWind;
     @Nullable @BindView(R.id.tv_stats_humidity) TextView tvWeatherHumidity;
@@ -153,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
 
         layoutOrder = new View[]{
                 llTimeLayout, llWeatherMainLayout, llWeatherDetails, llDivider1, llWeatherStatsLayout, llDivider2,
-                llCalendarLayout, llDivider3, llRoutes1Layout, llDivider4, llRoutes2Layout, llDivider5, llCalendarFieldLayout
+                llCalendarLayout, llDivider3, llRoutes1Layout, llDivider4, llRoutes2Layout, llDivider5, llCalendarFieldLayout, notesView
         };
     }
 
@@ -190,6 +193,16 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
 
     @Override
     public void updateTimeRemaining() {
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = registerReceiver(null, ifilter);
+
+        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL ||
+                status == BatteryManager.BATTERY_STATUS_NOT_CHARGING;
+
+        ivBattery.setImageResource(isCharging ? R.drawable.ic_battery_charging : R.drawable.ic_battery_alert);
+
         cvCalendarView.setDate(System.currentTimeMillis());
 
         long remaining = activatedTime - System.currentTimeMillis() + 30000;
@@ -246,6 +259,7 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
 
         releaseWakeLock();
         presenter.background();
+        notesView.saveImage();
     }
 
     @Override
