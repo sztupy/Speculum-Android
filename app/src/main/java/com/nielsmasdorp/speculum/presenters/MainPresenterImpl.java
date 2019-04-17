@@ -37,6 +37,8 @@ import static edu.cmu.pocketsphinx.SpeechRecognizerSetup.defaultSetup;
  */
 public class MainPresenterImpl implements MainPresenter {
 
+    private static String LOG_TAG = "MainPresenter";
+
     private MainView view;
     private MainInteractor interactor;
     private Application application;
@@ -112,6 +114,7 @@ public class MainPresenterImpl implements MainPresenter {
 
         @Override
         public void onError(Throwable e) {
+            Log.e(LOG_TAG, "Error during Weather Event", e);
             view.showError(e.getMessage());
         }
 
@@ -129,6 +132,7 @@ public class MainPresenterImpl implements MainPresenter {
 
         @Override
         public void onError(Throwable e) {
+            Log.e(LOG_TAG, "Error during Calendar Event", e);
             view.showError(e.getMessage());
         }
 
@@ -147,6 +151,7 @@ public class MainPresenterImpl implements MainPresenter {
 
         @Override
         public void onError(Throwable e) {
+            Log.e(LOG_TAG, "Error during Seconds Event", e);
             view.showError(e.getMessage());
         }
 
@@ -170,6 +175,7 @@ public class MainPresenterImpl implements MainPresenter {
 
         @Override
         public void onError(Throwable e) {
+            Log.e(LOG_TAG, "Error during departure Event", e);
             view.showError(e.getMessage());
         }
 

@@ -57,63 +57,78 @@ public class GoogleMapsDestinationService {
 
     public Observable<TravelDetails> getTravelRoutes(DestinationResponse response, String destination) {
 
-        Log.i(LOG_TAG, "Travel report: " + response.toString());
+        try {
+            Log.i(LOG_TAG, "Travel report: " + response.toString());
 
-        List<TravelRoute> travelRoutes = new ArrayList<>();
+            List<TravelRoute> travelRoutes = new ArrayList<>();
 
-        if (response.getRoutes()!=null) {
-            for (Route route : response.getRoutes()) {
-                if (route.getLegs().isEmpty())
-                    break;
+            if (response.getRoutes() != null) {
+                for (Route route : response.getRoutes()) {
+                    if (route.getLegs().isEmpty())
+                        break;
 
-                Leg leg = route.getLegs().get(0);
-                String firstBus = "";
+                    Leg leg = route.getLegs().get(0);
+                    String firstBus = "";
 
-                SpannableStringBuilder routeString = new SpannableStringBuilder();
+                    SpannableStringBuilder routeString = new SpannableStringBuilder();
 
-                int startPos = 0;
+                    int startPos = 0;
 
-                for (Step step : leg.getSteps()) {
-                    if (step.getTravelMode().equals("TRANSIT")) {
-                        routeString.append(step.getTransitDetails().getDepartureStop().getName());
-                        routeString.append(" ⇨ ");
+                    for (Step step : leg.getSteps()) {
+                        if (step.getTravelMode().equals("TRANSIT")) {
+                            routeString.append(step.getTransitDetails().getDepartureStop().getName());
+                            routeString.append(" ⇨ ");
 
-                        startPos = routeString.length();
-                        routeString.append(intTo24HourTime(step.getTransitDetails().getDepartureTime().getValue()));
-                        routeString.setSpan(new StyleSpan(Typeface.BOLD), startPos, routeString.length(), SPAN_INCLUSIVE_EXCLUSIVE);
+                            startPos = routeString.length();
+                            routeString.append(intTo24HourTime(step.getTransitDetails().getDepartureTime().getValue()));
+                            routeString.setSpan(new StyleSpan(Typeface.BOLD), startPos, routeString.length(), SPAN_INCLUSIVE_EXCLUSIVE);
 
-                        routeString.append(" \uD83D\uDE8C ");
+                            routeString.append(" \uD83D\uDE8C ");
 
-                        startPos = routeString.length();
-                        routeString.append(step.getTransitDetails().getLine().getShortName());
-                        routeString.setSpan(new StyleSpan(Typeface.BOLD), startPos, routeString.length(), SPAN_INCLUSIVE_EXCLUSIVE);
+                            startPos = routeString.length();
 
-                        routeString.append(" to ");
-                        routeString.append(step.getTransitDetails().getHeadsign());
-                        routeString.append(" ⇨ ");
+                            String busName = "?";
 
-                        startPos = routeString.length();
-                        routeString.append(intTo24HourTime(step.getTransitDetails().getArrivalTime().getValue()));
-                        routeString.setSpan(new StyleSpan(Typeface.BOLD), startPos, routeString.length(), SPAN_INCLUSIVE_EXCLUSIVE);
+                            if (step.getTransitDetails().getLine() != null) {
+                                if (step.getTransitDetails().getLine().getShortName() != null) {
+                                    busName = step.getTransitDetails().getLine().getShortName();
+                                } else if (step.getTransitDetails().getLine().getName() != null) {
+                                    busName = step.getTransitDetails().getLine().getName();
+                                }
+                            }
+                            routeString.append(busName);
+                            routeString.setSpan(new StyleSpan(Typeface.BOLD), startPos, routeString.length(), SPAN_INCLUSIVE_EXCLUSIVE);
 
-                        routeString.append(" ");
-                        routeString.append(step.getTransitDetails().getArrivalStop().getName());
-                        routeString.append(" ⇨ ");
-                        if (firstBus.equals("")) {
-                            firstBus = step.getTransitDetails().getLine().getShortName().split(" ")[0];
+                            routeString.append(" to ");
+                            routeString.append(step.getTransitDetails().getHeadsign());
+                            routeString.append(" ⇨ ");
+
+                            startPos = routeString.length();
+                            routeString.append(intTo24HourTime(step.getTransitDetails().getArrivalTime().getValue()));
+                            routeString.setSpan(new StyleSpan(Typeface.BOLD), startPos, routeString.length(), SPAN_INCLUSIVE_EXCLUSIVE);
+
+                            routeString.append(" ");
+                            routeString.append(step.getTransitDetails().getArrivalStop().getName());
+                            routeString.append(" ⇨ ");
+                            if (firstBus.equals("")) {
+                                firstBus = busName.split(" ")[0];
+                            }
+                        } else {
+                            routeString.append("\uD83D\uDEB6 ⇨ ");
                         }
-                    } else {
-                        routeString.append("\uD83D\uDEB6 ⇨ ");
                     }
+                    routeString.append(destination);
+                    travelRoutes.add(new TravelRoute(routeString, firstBus, new Date((long) leg.getDepartureTime().getValue() * 1000), new Date((long) leg.getArrivalTime().getValue() * 1000)));
                 }
-                routeString.append(destination);
-                travelRoutes.add(new TravelRoute(routeString, firstBus, new Date((long)leg.getDepartureTime().getValue() * 1000), new Date((long)leg.getArrivalTime().getValue() * 1000)));
             }
+
+            Collections.sort(travelRoutes, (a, b) -> a.getArrivalTime().compareTo(b.getArrivalTime()));
+
+            return Observable.just(new TravelDetails(travelRoutes, new Date(System.currentTimeMillis()), destination));
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Error", e);
+            throw e;
         }
-
-        Collections.sort(travelRoutes, (a,b) -> a.getArrivalTime().compareTo(b.getArrivalTime()) );
-
-        return Observable.just(new TravelDetails(travelRoutes, new Date(System.currentTimeMillis()), destination));
     }
 
     public String intTo24HourTime(int value) {

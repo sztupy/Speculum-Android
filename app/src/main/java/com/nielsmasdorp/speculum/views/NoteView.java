@@ -110,7 +110,7 @@ public class NoteView extends View {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
-        mPaint.setStrokeWidth(12);
+        mPaint.setStrokeWidth(6);
     }
 
 
@@ -155,7 +155,7 @@ public class NoteView extends View {
     private void touch_start(float x, float y, float pressure) {
         mPath.reset();
         mPath.moveTo(x, y);
-        mPaint.setStrokeWidth(20 * pressure);
+        mPaint.setStrokeWidth(10 * pressure);
         mX = x;
         mY = y;
     }
@@ -173,7 +173,7 @@ public class NoteView extends View {
 
         mPath.reset();
         mPath.moveTo(x, y);
-        mPaint.setStrokeWidth(20 * pressure);
+        mPaint.setStrokeWidth(10 * pressure);
     }
 
     private void touch_up() {

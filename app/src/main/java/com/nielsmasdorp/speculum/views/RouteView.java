@@ -61,16 +61,19 @@ public class RouteView extends FrameLayout {
         TextView[] endViews = { tvRoute1End, tvRoute2End, tvRoute3End, tvRoute4End };
 
         for (int i = 0; i < 4; i++) {
-            if (routeList.getRoutes().size() < i)
-                break;
+            if (i >= routeList.getRoutes().size()) {
+                startViews[i].setText("");
+                detailViews[i].setText("");
+                endViews[i].setText("");
+            } else {
+                TravelRoute travelRoute = routeList.getRoutes().get(i);
 
-            TravelRoute travelRoute = routeList.getRoutes().get(i);
-
-            String text = format.format(travelRoute.getDepartureTime()) + " \uD83D\uDE8C " + travelRoute.getFirstBus();
-            startViews[i].setText(text);
-            detailViews[i].setText(travelRoute.getRoute());
-            detailViews[i].setSelected(true);
-            endViews[i].setText(format.format(travelRoute.getArrivalTime()));
+                String text = format.format(travelRoute.getDepartureTime()) + " \uD83D\uDE8C " + travelRoute.getFirstBus();
+                startViews[i].setText(text);
+                detailViews[i].setText(travelRoute.getRoute());
+                detailViews[i].setSelected(true);
+                endViews[i].setText(format.format(travelRoute.getArrivalTime()));
+            }
         }
 
         String text = "Route to " + routeList.getDestination() + "; Last updated: " + format.format(routeList.getLastUpdated());
