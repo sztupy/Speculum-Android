@@ -1,6 +1,6 @@
 This is my Magic Mirror software based on https://github.com/NielsMasdorp/Speculum-Android
 
-For more info please see https://tumblr.esoxy.uk/post/184274799794/this-is-my-first-try-in-making-a-magic-mirror
+For more info please see https://tumblr.esoxy.uk/post/184280757719/this-is-my-first-try-in-making-a-magic-mirror
 
 License
 ====
