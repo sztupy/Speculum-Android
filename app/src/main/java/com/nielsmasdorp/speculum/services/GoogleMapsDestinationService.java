@@ -15,14 +15,19 @@ import com.nielsmasdorp.speculum.models.destination.Leg;
 import com.nielsmasdorp.speculum.models.destination.Route;
 import com.nielsmasdorp.speculum.models.destination.Step;
 import com.nielsmasdorp.speculum.util.Constants;
+import com.nielsmasdorp.speculum.util.Tls12SocketFactory;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import okhttp3.ConnectionSpec;
+import okhttp3.OkHttpClient;
+import okhttp3.TlsVersion;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -43,8 +48,8 @@ public class GoogleMapsDestinationService {
     private GoogleMapsApi googleMapsApi;
 
     public GoogleMapsDestinationService() {
-
         Retrofit retrofit = new Retrofit.Builder()
+                .client(Tls12SocketFactory.returnClient())
                 .baseUrl(Constants.GOOGLE_MAPS_BASE_URL)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create(new GsonBuilder()

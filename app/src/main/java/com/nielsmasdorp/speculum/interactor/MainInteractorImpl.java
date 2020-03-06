@@ -31,8 +31,8 @@ import rx.subscriptions.CompositeSubscription;
 public class MainInteractorImpl implements MainInteractor {
 
     private static final String LOG_TAG = "MainInteractor";
-    private static int AMOUNT_OF_RETRIES = 3;
-    private static int DELAY_IN_SECONDS = 10;
+    private static int AMOUNT_OF_RETRIES = 128;
+    private static int DELAY_IN_SECONDS = 1;
 
     private Application application;
     private ForecastIOService forecastIOService;
@@ -59,8 +59,12 @@ public class MainInteractorImpl implements MainInteractor {
     @Override
     public void loadDepartureMap(int updateDelay, String departure, String destination, String destinationName, String apiKey, Subscriber<TravelDetails> subscriber) {
         longRunningCompositeSubscription.add(Observable.interval(0, updateDelay, TimeUnit.MINUTES, Schedulers.io())
+                .doOnNext(s -> Log.i(LOG_TAG, "Departure Interval fired: " + s + " on thread " + Thread.currentThread().getName()))
+                .doOnError(s -> Log.i(LOG_TAG, "Departure Error 1", s))
                 .flatMap(ignore -> googleMapsDestinationService.getApi().getDirections(departure, destination, "transit", apiKey, "bus", "true", "fewer_transfers" ))
+                .doOnError(s -> Log.i(LOG_TAG, "Departure Error 2", s))
                 .flatMap(response -> googleMapsDestinationService.getTravelRoutes(response,destinationName))
+                .doOnError(s -> Log.i(LOG_TAG, "Departure Error 3", s))
                 .retryWhen(Observables.exponentialBackoff(AMOUNT_OF_RETRIES, DELAY_IN_SECONDS, TimeUnit.SECONDS))
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(s -> Log.i(LOG_TAG, "Observe fired: " + s + " on thread " + Thread.currentThread().getName()))
@@ -87,9 +91,12 @@ public class MainInteractorImpl implements MainInteractor {
         final String query = celsius ? Constants.WEATHER_QUERY_SECOND_CELSIUS : Constants.WEATHER_QUERY_SECOND_FAHRENHEIT;
 
         longRunningCompositeSubscription.add(Observable.interval(0, updateDelay, TimeUnit.MINUTES, Schedulers.io())
-                .doOnNext(s -> Log.i(LOG_TAG, "Interval fired: " + s + " on thread " + Thread.currentThread().getName()))
+                .doOnNext(s -> Log.i(LOG_TAG, "Weather Interval fired: " + s + " on thread " + Thread.currentThread().getName()))
+                .doOnError(s -> Log.i(LOG_TAG, "Weather Error 1", s))
                 .flatMap(ignore -> forecastIOService.getApi().getCurrentWeatherConditions(apiKey, location, query, "hourly"))
+                .doOnError(s -> Log.i(LOG_TAG, "Weather Error 2", s))
                 .flatMap(response -> forecastIOService.getCurrentWeather(response, weatherIconGenerator, application, celsius))
+                .doOnError(s -> Log.i(LOG_TAG, "Weather Error 3", s))
                 .retryWhen(Observables.exponentialBackoff(AMOUNT_OF_RETRIES, DELAY_IN_SECONDS, TimeUnit.SECONDS))
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(s -> Log.i(LOG_TAG, "Observe fired: " + s + " on thread " + Thread.currentThread().getName()))

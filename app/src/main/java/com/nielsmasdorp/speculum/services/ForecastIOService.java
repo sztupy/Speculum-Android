@@ -9,14 +9,19 @@ import com.nielsmasdorp.speculum.models.Weather;
 import com.nielsmasdorp.speculum.models.forecast.DayForecast;
 import com.nielsmasdorp.speculum.models.forecast.ForecastResponse;
 import com.nielsmasdorp.speculum.util.Constants;
+import com.nielsmasdorp.speculum.util.Tls12SocketFactory;
 import com.nielsmasdorp.speculum.util.WeatherIconGenerator;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import okhttp3.ConnectionSpec;
+import okhttp3.OkHttpClient;
+import okhttp3.TlsVersion;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -35,8 +40,8 @@ public class ForecastIOService {
     private ForecastIOApi forecastIOApi;
 
     public ForecastIOService() {
-
         Retrofit retrofit = new Retrofit.Builder()
+                .client(Tls12SocketFactory.returnClient())
                 .baseUrl(Constants.FORECAST_BASE_URL)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())

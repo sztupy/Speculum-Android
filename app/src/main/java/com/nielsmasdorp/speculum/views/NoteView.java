@@ -128,21 +128,25 @@ public class NoteView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        width = w;
-        height = h;
+        if (w > 0 && h > 0) {
+            width = w;
+            height = h;
 
-        saveImage(mBitmap);
-        clearImage();
+            saveImage(mBitmap);
+            clearImage();
 
-        Bitmap bitmap = loadImage();
-        if (bitmap != null) {
-            mCanvas.drawBitmap(bitmap, 0, 0, null);
+            Bitmap bitmap = loadImage();
+            if (bitmap != null) {
+                mCanvas.drawBitmap(bitmap, 0, 0, null);
+            }
         }
     }
 
     private void clearImage() {
-        mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        mCanvas = new Canvas(mBitmap);
+        if (width>0 && height>0) {
+            mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            mCanvas = new Canvas(mBitmap);
+        }
     }
 
     @Override

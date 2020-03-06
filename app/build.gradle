@@ -1,32 +1,32 @@
 buildscript {
     repositories {
+        google()
         maven { url 'https://maven.fabric.io/public' }
         mavenCentral()
     }
 
     dependencies {
-        classpath 'me.tatarka:gradle-retrolambda:3.2.4'
-        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
+        classpath 'me.tatarka:gradle-retrolambda:3.7.0'
     }
 }
 apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
-apply plugin: 'com.neenbedankt.android-apt'
 
 repositories {
+    google()
     maven { url 'https://maven.fabric.io/public' }
     mavenCentral()
 }
 
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion '23.0.3'
+    compileSdkVersion 28
+    buildToolsVersion '27.0.3'
 
     defaultConfig {
         applicationId "com.nielsmasdorp.speculum"
         minSdkVersion 17
-        targetSdkVersion 25
+        targetSdkVersion 28
         versionCode 3
         versionName "1.1.0"
     }
@@ -43,37 +43,41 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     def solidVersion = '2.0.3'
-    compile "info.android15.solid:streams:$solidVersion"
-    compile "info.android15.solid:collections:$solidVersion"
+    implementation "info.android15.solid:streams:$solidVersion"
+    implementation "info.android15.solid:collections:$solidVersion"
 
-    compile 'com.android.support:gridlayout-v7:25.0.1'
-    compile 'com.android.support:appcompat-v7:25.0.1'
-    compile 'com.android.support:design:25.0.1'
+    implementation 'com.google.android.gms:play-services-base:16+'
 
-    compile 'com.squareup.retrofit2:retrofit:2.0.0-beta4'
-    compile 'com.squareup.retrofit2:converter-gson:2.0.0-beta4'
-    compile 'com.squareup.retrofit2:adapter-rxjava:2.0.0-beta4'
+    implementation 'com.android.support:gridlayout-v7:27.1.1'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:design:27.1.1'
 
-    compile 'com.squareup.picasso:picasso:2.5.2'
-    compile 'com.afollestad.material-dialogs:core:0.8.5.9'
+    implementation 'com.squareup.retrofit2:retrofit:2.6.4'
+    implementation 'com.squareup.retrofit2:converter-gson:2.6.4'
+    implementation 'com.squareup.retrofit2:adapter-rxjava:2.6.4'
 
-    compile 'io.reactivex:rxandroid:1.2.0'
-    compile 'io.reactivex:rxjava:1.1.5'
+    implementation 'com.squareup.picasso:picasso:2.5.2'
+    implementation 'com.afollestad.material-dialogs:core:0.8.5.9'
 
-    compile 'com.jakewharton:butterknife:8.0.1'
+    implementation 'io.reactivex:rxandroid:1.2.0'
+    implementation 'io.reactivex:rxjava:1.1.5'
 
-    compile 'com.google.dagger:dagger:2.1'
-    compile('com.github.afollestad:assent:0.2.2') {
+    implementation 'com.jakewharton:butterknife:8.0.1'
+
+    implementation 'com.google.dagger:dagger:2.1'
+    implementation('com.github.afollestad:assent:0.2.2') {
         transitive = true
     }
 
-    apt 'com.jakewharton:butterknife-compiler:8.0.1'
-    apt 'com.google.dagger:dagger-compiler:2.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.0.1'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.1'
 
-    provided 'javax.annotation:jsr250-api:1.0'
+    //retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:2.3.0'
+
+    compileOnly 'javax.annotation:jsr250-api:1.0'
 }
 
 ant.importBuild 'assets.xml'

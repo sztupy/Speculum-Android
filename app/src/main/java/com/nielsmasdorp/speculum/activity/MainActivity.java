@@ -32,6 +32,10 @@ import android.widget.Toast;
 
 import com.afollestad.assent.Assent;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.security.ProviderInstaller;
 import com.nielsmasdorp.speculum.R;
 import com.nielsmasdorp.speculum.SpeculumApplication;
 import com.nielsmasdorp.speculum.models.Configuration;
@@ -130,6 +134,18 @@ public class MainActivity extends AppCompatActivity implements MainView, View.On
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        try {
+            ProviderInstaller.installIfNeeded(this);
+            Log.i(LOG_TAG, "Google Play Services Installed");
+        } catch (GooglePlayServicesRepairableException e) {
+            GoogleApiAvailability.getInstance()
+                    .showErrorNotification(this, e.getConnectionStatusCode());
+            Log.i(LOG_TAG, "Error", e);
+        } catch (GooglePlayServicesNotAvailableException e) {
+            Log.i(LOG_TAG, "Error", e);
+        }
+
         setContentView(R.layout.activity_main);
         ((SpeculumApplication) getApplication()).createMainComponent(this).inject(this);
         Assent.setActivity(this, this);
